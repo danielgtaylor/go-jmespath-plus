@@ -13,6 +13,7 @@ var lexingTests = []struct {
 }{
 	{"*", []token{{tStar, "*", 0, 1}}},
 	{".", []token{{tDot, ".", 0, 1}}},
+	{"..", []token{{tRecursive, "..", 0, 2}}},
 	{"[?", []token{{tFilter, "[?", 0, 2}}},
 	{"[]", []token{{tFlatten, "[]", 0, 2}}},
 	{"(", []token{{tLparen, "(", 0, 1}}},

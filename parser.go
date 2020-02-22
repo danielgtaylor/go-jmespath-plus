@@ -34,6 +34,7 @@ const (
 	ASTSubexpression
 	ASTSlice
 	ASTValueProjection
+	ASTRecursiveProjection
 )
 
 // ASTNode represents the abstract syntax tree of a JMESPath expression.
@@ -106,6 +107,7 @@ var bindingPowers = map[tokType]int{
 	tLbrace:             50,
 	tLbracket:           55,
 	tLparen:             60,
+	tRecursive:          9,
 }
 
 // Parser holds state about the current expression being parsed.
@@ -233,6 +235,12 @@ func (p *Parser) led(tokenType tokType, node ASTNode) (ASTNode, error) {
 			nodeType: ASTValueProjection,
 			children: []ASTNode{node, right},
 		}, err
+	case tRecursive:
+		right, err := p.parseDotRHS(bindingPowers[tRecursive])
+		return ASTNode{
+			nodeType: ASTRecursiveProjection,
+			children: []ASTNode{node, right},
+		}, err
 	case tPipe:
 		right, err := p.parseExpression(bindingPowers[tPipe])
 		return ASTNode{nodeType: ASTPipe, children: []ASTNode{node, right}}, err
@@ -346,6 +354,13 @@ func (p *Parser) nud(token token) (ASTNode, error) {
 			right, err = p.parseProjectionRHS(bindingPowers[tStar])
 		}
 		return ASTNode{nodeType: ASTValueProjection, children: []ASTNode{left, right}}, err
+	case tRecursive:
+		left := ASTNode{nodeType: ASTIdentity}
+		right, err := p.parseDotRHS(bindingPowers[tRecursive])
+		return ASTNode{
+			nodeType: ASTRecursiveProjection,
+			children: []ASTNode{left, right},
+		}, err
 	case tFilter:
 		return p.parseFilter(ASTNode{nodeType: ASTIdentity})
 	case tLbrace:

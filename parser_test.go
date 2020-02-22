@@ -16,7 +16,7 @@ var parsingErrorTests = []struct {
 	{"]", "Invalid"},
 	{")", "Invalid"},
 	{"}", "Invalid"},
-	{"foo..bar", "Invalid"},
+	{"foo...bar", "Invalid"},
 	{`foo."bar`, "Forwards lexer errors"},
 	{`{foo: bar`, "Incomplete expression"},
 	{`{foo bar}`, "Invalid"},

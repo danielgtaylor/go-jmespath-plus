@@ -81,10 +81,10 @@ const (
 	tAnd
 	tNot
 	tEOF
+	tRecursive
 )
 
 var basicTokens = map[rune]tokType{
-	'.': tDot,
 	'*': tStar,
 	',': tComma,
 	':': tColon,
@@ -160,6 +160,9 @@ loop:
 				position:  lexer.currentPos - lexer.lastWidth,
 				length:    1,
 			}
+			tokens = append(tokens, t)
+		} else if r == '.' {
+			t := lexer.consumeDot()
 			tokens = append(tokens, t)
 		} else if r == '-' || (r >= '0' && r <= '9') {
 			t := lexer.consumeNumber()
@@ -417,4 +420,30 @@ func (lexer *Lexer) consumeNumber() token {
 		position:  start,
 		length:    lexer.currentPos - start,
 	}
+}
+
+func (lexer *Lexer) consumeDot() token {
+	var t token
+	start := lexer.currentPos - lexer.lastWidth
+
+	// Depending on the next character, this can be either a simple property
+	// selector (single dot) or a recursive descent operator.
+	nextRune := lexer.next()
+	if nextRune == '.' {
+		t = token{
+			tokenType: tRecursive,
+			value:     "..",
+			position:  start,
+			length:    2,
+		}
+	} else {
+		lexer.back()
+		t = token{
+			tokenType: tDot,
+			value:     ".",
+			position:  start,
+			length:    1,
+		}
+	}
+	return t
 }

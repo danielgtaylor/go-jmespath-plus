@@ -310,6 +310,48 @@ func (intr *treeInterpreter) Execute(node ASTNode, value interface{}) (interface
 			}
 		}
 		return collected, nil
+	case ASTRecursiveProjection:
+		// Creates a new projection by first getting the current (left) value and
+		// then going through each map property and array item to recursively
+		// find matches for the next part of the query (right).
+		left, err := intr.Execute(node.children[0], value)
+		if err != nil {
+			return nil, nil
+		}
+
+		collected := []interface{}{}
+
+		var process func(interface{}) error
+		process = func(value interface{}) error {
+			if m, ok := value.(map[string]interface{}); ok {
+				// The current item is a map. See if it matches and then process
+				// each value in the map.
+				current, err := intr.Execute(node.children[1], m)
+				if err != nil {
+					return err
+				}
+				if current != nil {
+					collected = append(collected, current)
+				}
+				for _, val := range m {
+					err := process(val)
+					if err != nil {
+						return err
+					}
+				}
+			} else if l, ok := value.([]interface{}); ok {
+				// The current item is a list, so process each item.
+				for _, item := range l {
+					err := process(item)
+					if err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		}
+
+		return collected, process(left)
 	}
 	return nil, errors.New("Unknown AST node: " + node.nodeType.String())
 }

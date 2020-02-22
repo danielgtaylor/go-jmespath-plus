@@ -17,16 +17,13 @@ runner (github.com/jmespath/jmespath.test).
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
-)
 
-import (
-	"encoding/json"
-
-	"github.com/jmespath/go-jmespath"
+	"github.com/danielgtaylor/go-jmespath-plus"
 )
 
 func errMsg(msg string, a ...interface{}) int {
