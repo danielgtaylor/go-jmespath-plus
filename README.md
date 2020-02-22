@@ -1,5 +1,7 @@
 # go-jmespath-plus - A JMESPath implementation in Go
 
+![CI](https://github.com/danielgtaylor/go-jmespath-plus/workflows/CI/badge.svg?branch=master)
+
 See http://jmespath.org for more info.
 
 ## Enhancements
