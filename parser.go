@@ -463,20 +463,40 @@ func (p *Parser) parseMultiSelectHash() (ASTNode, error) {
 				return ASTNode{}, p.syntaxError("Expected tQuotedIdentifier or tUnquotedIdentifier")
 			}
 		}
+		var node ASTNode
 		keyName := keyToken.value
 		err := p.match(tColon)
 		if err != nil {
-			return ASTNode{}, err
+			// No colon was found, so this might be the shorthand case. If it's not a
+			// comma (end of key) or right brace (end of multi-select) next then
+			// there must be some error.
+			if p.current() != tComma && p.current() != tRbrace {
+				return ASTNode{}, err
+			}
+
+			// Since we only support single field selection, here we generate a
+			// field AST node and let the interpreter take care of it.
+			node = ASTNode{
+				nodeType: ASTKeyValPair,
+				value:    keyName,
+				children: []ASTNode{ASTNode{
+					nodeType: ASTField,
+					value:    keyName,
+				}},
+			}
+		} else {
+			// This is the normal case with a colon.
+			value, err := p.parseExpression(0)
+			if err != nil {
+				return ASTNode{}, err
+			}
+			node = ASTNode{
+				nodeType: ASTKeyValPair,
+				value:    keyName,
+				children: []ASTNode{value},
+			}
 		}
-		value, err := p.parseExpression(0)
-		if err != nil {
-			return ASTNode{}, err
-		}
-		node := ASTNode{
-			nodeType: ASTKeyValPair,
-			value:    keyName,
-			children: []ASTNode{value},
-		}
+
 		children = append(children, node)
 		if p.current() == tComma {
 			err := p.match(tComma)

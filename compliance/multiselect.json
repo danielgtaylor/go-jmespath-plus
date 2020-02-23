@@ -124,6 +124,22 @@
          {
             "expression": "foo.[noexist,alsonoexist]",
             "result": [null, null]
+         },
+         {
+            "expression": "foo.{bar}",
+            "result": {"bar": "bar"}
+         },
+         {
+            "expression": "foo.{bar: bar, baz}",
+            "result": {"bar": "bar", "baz": "baz"}
+         },
+         {
+           "expression": "foo.{bar, baz: baz}",
+           "result": { "bar": "bar", "baz": "baz" }
+         },
+         {
+           "expression": "foo.{bar: nested.one.a, baz}",
+           "result": { "bar": "first", "baz": "baz" }
          }
      ]
 }, {

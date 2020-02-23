@@ -37,3 +37,28 @@ $ jpgo '*.bar' <input
 $ jpgo '..bar' <input
 [1, 2, 3]
 ```
+
+### Multi-select Hash Shorthand
+
+Selecting a single key from an object is now possible with a property shorthand syntax borrowed from [modern Javascript](http://es6-features.org/#PropertyShorthand). Given:
+
+```json
+{
+  "foo": {
+    "bar": 1,
+    "baz": [true, false]
+  }
+}
+```
+
+Then you can select via the shorthand:
+
+```sh
+# Shorthand example.
+$ jpgo 'foo.{bar}' <input
+{"bar": 1}
+
+# Mixing shorthand and long-form.
+$ jpgo 'foo.{bar, first_baz: baz[0]}' <input
+{"bar": 1, "first_baz": true}
+```
