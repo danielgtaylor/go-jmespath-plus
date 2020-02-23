@@ -21,6 +21,7 @@ A new `..` recursive descent operator is supported. It will recursively traverse
       {
         "bar": 3
       }
+    ]
   }
 }
 ```
