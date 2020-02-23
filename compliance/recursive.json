@@ -1,0 +1,21 @@
+[
+  {
+    "given": {
+      "bar": 1,
+      "foo": [
+        {
+          "bar": 2
+        },
+        {
+          "foo": [{ "bar": 3 }]
+        }
+      ]
+    },
+    "cases": [
+      {
+        "expression": "..bar",
+        "result": [1, 2, 3]
+      }
+    ]
+  }
+]

@@ -35,6 +35,7 @@ var whiteListed = []string{
 	"compliance/multiselect.json",
 	"compliance/ormatch.json",
 	"compliance/pipe.json",
+	"compliance/recursive.json",
 	"compliance/slice.json",
 	"compliance/syntax.json",
 	"compliance/unicode.json",
