@@ -62,3 +62,133 @@ $ jpgo 'foo.{bar}' <input
 $ jpgo 'foo.{bar, first_baz: baz[0]}' <input
 {"bar": 1, "first_baz": true}
 ```
+
+### Group By Function
+
+The [`group_by`](https://stedolan.github.io/jq/manual/) function from `jq` is borrowed to generate a list of grouped objects based on the result of an expression executed on each item in the incoming array. The output is sorted in ascending order.
+
+`group_by(array $elements, expression->number|expression->string field)`
+
+Given:
+
+```json
+{
+  "foo": [
+    {
+      "id": 1,
+      "type": "red"
+    },
+    {
+      "id": 2,
+      "type": "blue"
+    },
+    {
+      "id": 3,
+      "type": "red"
+    }
+  ]
+}
+```
+
+Then you can group the items by their `type`:
+
+```sh
+# Group the inputs by the type of item.
+$ jpgo 'group_by(foo, &type)' <input
+```
+
+The result:
+
+```json
+[
+  [
+    {
+      "id": 2,
+      "type": "blue"
+    }
+  ],
+  [
+    {
+      "id": 1,
+      "type": "red"
+    },
+    {
+      "id": 3,
+      "type": "red"
+    }
+  ]
+]
+```
+
+### Pivot Function
+
+The `pivot` function is a convenience wrapper around `group_by(...)` that also pivots the data to return an object where the keys are the grouping value and the values are the groups of objects with the given projection expression applied to each object.
+
+`pivot(array $elements, expression->number|expression->string field, expression projection)`
+
+Given:
+
+```json
+{
+  "foo": [
+    {
+      "id": 1,
+      "type": "red"
+    },
+    {
+      "id": 2,
+      "type": "blue"
+    },
+    {
+      "id": 3,
+      "type": "red"
+    }
+  ]
+}
+```
+
+Then you can pivot the items by their `type`:
+
+```sh
+# Pivot items by their type
+$ jpgo 'pivot(foo, &type, &id)' <input
+```
+
+The result:
+
+```json
+{
+  "blue": [2],
+  "red": [1, 3]
+}
+```
+
+You can also use the identity to keep the full objects:
+
+```sh
+# Pivot items by their type and keep each original item.
+$ jpgo 'pivot(foo, &type, &@)' <input
+```
+
+The result:
+
+```json
+{
+  "blue": [
+    {
+      "id": 2,
+      "type": "blue"
+    }
+  ],
+  "red": [
+    {
+      "id": 1,
+      "type": "red"
+    },
+    {
+      "id": 3,
+      "type": "red"
+    }
+  ]
+}
+```

@@ -276,6 +276,25 @@ func newFunctionCaller() *functionCaller {
 			handler:   jpfSortBy,
 			hasExpRef: true,
 		},
+		"group_by": {
+			name: "group_by",
+			arguments: []argSpec{
+				{types: []jpType{jpArray}},
+				{types: []jpType{jpExpref}},
+			},
+			handler:   jpfGroupBy,
+			hasExpRef: true,
+		},
+		"pivot": {
+			name: "pivot",
+			arguments: []argSpec{
+				{types: []jpType{jpArray}},
+				{types: []jpType{jpExpref}},
+				{types: []jpType{jpExpref}},
+			},
+			handler:   jpfPivot,
+			hasExpRef: true,
+		},
 		"join": {
 			name: "join",
 			arguments: []argSpec{
@@ -763,6 +782,101 @@ func jpfSortBy(arguments []interface{}) (interface{}, error) {
 	} else {
 		return nil, errors.New("invalid type, must be number of string")
 	}
+}
+func jpfGroupBy(arguments []interface{}) (interface{}, error) {
+	intr := arguments[0].(*treeInterpreter)
+	arr := arguments[1].([]interface{})
+	exp := arguments[2].(expRef)
+	node := exp.ref
+
+	if len(arr) == 0 {
+		return nil, nil
+	}
+
+	groups := make(map[interface{}][]interface{})
+
+	for _, item := range arr {
+		key, err := intr.Execute(node, item)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := groups[key]; !ok {
+			groups[key] = make([]interface{}, 0, 1)
+		}
+
+		groups[key] = append(groups[key], item)
+	}
+
+	if len(groups) == 0 {
+		return nil, nil
+	}
+
+	// This is so ugly :-(
+	keys := make([]interface{}, len(groups))
+	for k := range groups {
+		if _, ok := k.(string); ok {
+			tmp := make([]string, 0, len(groups))
+			for k2 := range groups {
+				tmp = append(tmp, k2.(string))
+			}
+			sort.Strings(tmp)
+			for i, val := range tmp {
+				keys[i] = val
+			}
+		} else if _, ok := k.(float64); ok {
+			tmp := make([]float64, 0, len(groups))
+			for k2 := range groups {
+				tmp = append(tmp, k2.(float64))
+			}
+			sort.Float64s(tmp)
+			for i, val := range tmp {
+				keys[i] = val
+			}
+		} else {
+			return nil, errors.New("invalid key type, must be number or string")
+		}
+		break
+	}
+
+	results := make([]interface{}, len(keys))
+	for i, k := range keys {
+		results[i] = groups[k]
+	}
+
+	return results, nil
+}
+func jpfPivot(arguments []interface{}) (interface{}, error) {
+	groups, err := jpfGroupBy(arguments)
+	if err != nil {
+		return nil, err
+	}
+
+	intr := arguments[0].(*treeInterpreter)
+	exp := arguments[2].(expRef)
+	node := exp.ref
+	proj := arguments[3].(expRef)
+	results := make(map[string]interface{})
+
+	for _, values := range groups.([]interface{}) {
+		key, err := intr.Execute(node, values.([]interface{})[0])
+		if err != nil {
+			return nil, err
+		}
+
+		k := fmt.Sprintf("%v", key)
+
+		results[k] = make([]interface{}, len(values.([]interface{})))
+		for i, v := range values.([]interface{}) {
+			projected, err := intr.Execute(proj.ref, v)
+			if err != nil {
+				return nil, err
+			}
+			results[k].([]interface{})[i] = projected
+		}
+	}
+
+	return results, nil
 }
 func jpfJoin(arguments []interface{}) (interface{}, error) {
 	sep := arguments[0].(string)
